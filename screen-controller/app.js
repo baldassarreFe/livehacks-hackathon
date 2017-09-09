@@ -1,4 +1,4 @@
-const socket = io('http://130.237.14.66:3000');
+const socket = io('http://130.237.14.63:3000');
 const synth = new Tone.Synth().toMaster();
 
 var clock = new THREE.Clock();
@@ -30,12 +30,13 @@ socket.on('noteOnScreen',function(data){
 		note = data[i];
 		if (note.ok) {
 			var mesh = scene.getObjectByName(note.boxId);
-			// if (mesh)
-				// mesh.material.color = 0x000000;
-			synth.triggerAttackRelease(note.name, note.duration);
-		}
-		else
+			if (mesh){
+				mesh.material.opacity = 0.5;
+				synth.triggerAttackRelease(note.name, note.duration);
+			}
+		} else {
 			synth.triggerAttackRelease('C0', note.duration);
+		}
 	}
 });
 
@@ -49,8 +50,6 @@ window.onload = function(){
 	camera = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,10000);
 	camera.position.set(0,400,-900);
 	camera.lookAt(scene.position);
-
-	controls = new THREE.TrackballControls(camera);
 
 	stats = new Stats();
 	stats.showPanel(1);
@@ -95,15 +94,12 @@ function render(){
 	}
 	requestAnimationFrame(render,renderer.domElement);
 	renderer.render(scene,camera);
-	controls.update();
 	stats.end();
 }
 
-// NOTE FUNCTIONS
+// CREATE BOX
 
 function Box(color, duration, id){
-
-	//let char = name.charAt(0);
 
 	switch (color){
 		case 'red':
@@ -125,7 +121,6 @@ function Box(color, duration, id){
 	}
 
 	this.geometry = new THREE.CubeGeometry(WIDTH,HEIGHT,duration*200);
-
 	this.material = new THREE.MeshBasicMaterial({
 		color:this.color,
 		side:THREE.DoubleSide,
@@ -138,9 +133,8 @@ function Box(color, duration, id){
 	this.mesh.position.y = 0;
 	this.mesh.position.z = 1000;
 
-	this.move = function(timeElapsed){
-		// this.mesh.position.z = this.mesh.position.z - ((cliff.geometry.parameters.depth / 4000) * timeElapsed);
-		this.mesh.position.z -= 10;
+	this.move = function(){
+		this.mesh.position.z -= 5;
 	}
 
 	this.destroy = function(){
@@ -148,25 +142,7 @@ function Box(color, duration, id){
 		var _this = this;
 		setTimeout(function(){
 			scene.remove(_this.mesh);
-			boxes.shift();
+			//boxes.shift();
 		},400);
 	}
-
 }
-
-function drawBox(data){
-	for (var color in data){
-		if (data.hasOwnProperty(color) && data.color > 0){
-			let box = new Box(color, data.color);
-			scene.add(box.mesh);
-			boxes.push(box);
-		}
-	}
-}
-
-/*function playNote(data){
-	let note = new Note(data.name,data.duration);
-	scene.add(note.mesh);
-	notes.push(note);
-	//synth.triggerAttackRelease(data.name,data.duration);
-}*/
