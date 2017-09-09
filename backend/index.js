@@ -26,12 +26,12 @@ notes.forEach(function (n) {
     n.time = Math.round(1000 * n.time);
     n.ok = true;
 
-    var shiftedTime = n.time + 4000;
+    var shiftedTime = n.time + 4000 + 2000;
     if (!groupedNotes[shiftedTime])
         groupedNotes[shiftedTime] = [];
     groupedNotes[shiftedTime].push(n);
 
-    var flooredTime = Math.floor(n.time / 500) * 500;
+    var flooredTime = Math.floor(n.time / 500) * 500 + 2000;
     if (!boxesToShow[flooredTime])
         boxesToShow[flooredTime] = {};
     var color = chooseBoxColor(n);
@@ -63,13 +63,13 @@ const appIo = require('socket.io').listen(server);
 
 var users = [];
 var userColors = {};
-receivedJumps = 0;
+var userJumps = {};
 
 appIo.on('connection', function (socket) {
     users.push(socket);
     console.log('Users connected, now ' + users.length);
 
-    socket.emit('song info', {title: 'some song'});
+    // socket.emit('song info', {title: 'some song'});
 
     socket.on('user info', function(msg) {
        userColors[msg.id] = msg.color
@@ -79,11 +79,15 @@ appIo.on('connection', function (socket) {
         startSong();
 
     socket.on('jump', function (msg) {
-        console.log(msg);
-        receivedJumps++;
-
-        if (receivedJumps > 10)
-            endSong()
+        /*
+        msg = eval(msg);
+        console.log(msg, msg['time'], parseInt(msg['time']));
+        ceiledJumpTime = Math.ceil((parseInt(msg['time']) - startTime) / 500) * 500;
+        if (! userJumps[ceiledJumpTime])
+            userJumps[ceiledJumpTime] = {red: 0, blue: 0, yellow: 0, green: 0};
+        userJumps[ceiledJumpTime][userColors[msg['deviceID']]]++;
+        console.log(ceiledJumpTime, userJumps[ceiledJumpTime])
+        */
     });
 
     socket.on('disconnect', function () {
@@ -93,7 +97,7 @@ appIo.on('connection', function (socket) {
 });
 
 function shouldStartSong() {
-    return screenSocket !== null && users.length >= 0
+    return screenSocket !== null && users.length >= 1
 }
 
 // song events
@@ -105,24 +109,43 @@ function startSong() {
 
     startTime = Date.now();
     setInterval(sendToScreen, 1);
+    setTimeout(endSong, 90000);
 }
 
 function sendToScreen() {
     var delta = Date.now() - startTime;
     if (boxesToShow.hasOwnProperty(delta)) {
-        console.log(boxesToShow[delta]);
         screenSocket.emit('boxOnScreen', boxesToShow[delta])
     }
 
-    if (groupedNotes.hasOwnProperty(delta + 4000)) {
-        screenSocket.emit('noteOnScreen', groupedNotes[delta + 4000])
+    if (boxesToShow.hasOwnProperty(delta - 4000) && userJumps.hasOwnProperty(delta)) {
+        var boxes = boxesToShow[delta-4000];
+        var jumps = userJumps[delta];
+
+        console.log(boxes, jumps);
+
+        for (var color in boxes) {
+            if (! boxes.hasOwnProperty(color))
+                continue;
+            if ((boxes[color].duration > 0) === (jumps[color] > 0)){
+                console.log('ok')
+            }
+            else {
+                console.log('no')
+            }
+        }
+    }
+
+    if (groupedNotes.hasOwnProperty(delta)) {
+        screenSocket.emit('noteOnScreen', groupedNotes[delta])
     }
 }
 
 function endSong() {
-    for (var i = 0; i < users.length; i++)
+    for (var i = 0; i < users.length; i++) {
         users[i].emit('song end');
         users[i].disconnect();
+    }
     screenSocket.emit('song end');
     screenSocket.disconnect();
     process.exit(0);

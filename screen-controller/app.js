@@ -1,4 +1,4 @@
-const socket = io('http://130.237.14.63:3000');
+const socket = io('http://130.237.14.66:3000');
 const synth = new Tone.Synth().toMaster();
 
 var clock = new THREE.Clock();
@@ -30,10 +30,9 @@ socket.on('noteOnScreen',function(data){
 		note = data[i];
 		if (note.ok) {
 			var mesh = scene.getObjectByName(note.boxId);
-			if (mesh){
+			if (mesh)
 				mesh.material.opacity = 0.5;
-				synth.triggerAttackRelease(note.name, note.duration);
-			}
+			synth.triggerAttackRelease(note.name, note.duration);
 		} else {
 			synth.triggerAttackRelease('C0', note.duration);
 		}
