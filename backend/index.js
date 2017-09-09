@@ -21,7 +21,7 @@ function chooseBoxColor(note) {
 
 notes.forEach(function (n) {
     if (n.name === undefined)
-        return
+        return;
 
     n.time = Math.round(1000 * n.time);
 
@@ -32,9 +32,10 @@ notes.forEach(function (n) {
 
     var flooredTime = Math.floor(n.time / 500) * 500;
     if (!boxesToShow[flooredTime])
-        boxesToShow[flooredTime] = {red: 0, blue: 0, green: 0, yellow: 0};
+        boxesToShow[flooredTime] = [];
     var color = chooseBoxColor(n);
-    boxesToShow[flooredTime][color] = 0.5; //Math.max(n.duration, boxesToShow[flooredTime][color]);
+    n.boxId = flooredTime;
+    boxesToShow[flooredTime][color] = {duration: 0.5, id: flooredTime}; //Math.max(n.duration, boxesToShow[flooredTime][color]);
 });
 
 // screen socket
@@ -59,6 +60,7 @@ server.listen(3001, backendUrl);
 const appIo = require('socket.io').listen(server);
 
 var users = [];
+var userColors = {};
 receivedJumps = 0;
 
 appIo.on('connection', function (socket) {
@@ -66,6 +68,10 @@ appIo.on('connection', function (socket) {
     console.log('Users connected, now ' + users.length);
 
     socket.emit('song info', {title: 'some song'});
+
+    socket.on('user info', function(msg) {
+       userColors[msg.id] = msg.color
+    });
 
     if (shouldStartSong())
         startSong();
