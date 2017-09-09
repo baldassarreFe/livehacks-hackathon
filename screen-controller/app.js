@@ -1,4 +1,4 @@
-const socket = io('http://130.237.14.63:3000');
+const socket = io('http://130.237.14.66:3000');
 const synth = new Tone.Synth().toMaster();
 
 var clock = new THREE.Clock();
@@ -16,10 +16,9 @@ var time = Date.now();
 // SOCKET LISTENERS
 
 socket.on('boxOnScreen',function(data){
-	console.log(data);
 	for (var c in data){
-		if (data.hasOwnProperty(c) && data[c] > 0){
-			let box = new Box(c, data[c].duration, data[c].boxId);
+		if (data.hasOwnProperty(c) && data[c].duration > 0){
+			let box = new Box(c, data[c].duration, data[c].id);
 			scene.add(box.mesh);
 			boxes.push(box);
 		}
@@ -27,9 +26,17 @@ socket.on('boxOnScreen',function(data){
 });
 
 socket.on('noteOnScreen',function(data){
-	//var object = scene.getObjectByName(data.id);
-	//object.success();
-	//synth.triggerAttackRelease(data[i].name,data[i].duration);
+	for (var i = 0; i < data.length; i++) {
+		note = data[i];
+		if (note.ok) {
+			var mesh = scene.getObjectByName(note.boxId);
+			// if (mesh)
+				// mesh.material.color = 0x000000;
+			synth.triggerAttackRelease(note.name, note.duration);
+		}
+		else
+			synth.triggerAttackRelease('C0', note.duration);
+	}
 });
 
 // 3D
@@ -44,11 +51,11 @@ window.onload = function(){
 	camera.lookAt(scene.position);
 
 	controls = new THREE.TrackballControls(camera);
-	
+
 	stats = new Stats();
 	stats.showPanel(1);
 	document.body.appendChild(stats.dom);
-		
+
 	renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
 	renderer.setSize(window.innerWidth,window.innerHeight);
 	document.body.appendChild(renderer.domElement);
@@ -58,7 +65,7 @@ window.onload = function(){
 }
 
 function environment(){
-	// cliff 
+	// cliff
 	let cliffGeometry = new THREE.CubeGeometry(1000,1000,2000);
 	let cliffMaterial = new THREE.MeshBasicMaterial({
 		color:0x000000
@@ -94,12 +101,12 @@ function render(){
 
 // NOTE FUNCTIONS
 
-function Box(color,duration,id){
+function Box(color, duration, id){
 
 	//let char = name.charAt(0);
 
 	switch (color){
-		case 'red': 
+		case 'red':
 		this.color = 0xff0000;
 		this.offset = 0;
 		break;
@@ -117,8 +124,6 @@ function Box(color,duration,id){
 		break;
 	}
 
-	this.name = id;
-
 	this.geometry = new THREE.CubeGeometry(WIDTH,HEIGHT,duration*200);
 
 	this.material = new THREE.MeshBasicMaterial({
@@ -127,20 +132,17 @@ function Box(color,duration,id){
 	});
 
 	this.mesh = new THREE.Mesh(this.geometry,this.material);
+	this.mesh.name = id;
 	this.mesh.position.x = this.offset*WIDTH + (this.offset * MARGIN);
 	this.mesh.position.x -= WIDTH*2;
 	this.mesh.position.y = 0;
 	this.mesh.position.z = 1000;
 
 	this.move = function(timeElapsed){
-		//this.mesh.position.z = this.mesh.position.z - ((cliff.geometry.parameters.depth / 4000) * timeElapsed);
-		this.mesh.position.z += 10;
+		// this.mesh.position.z = this.mesh.position.z - ((cliff.geometry.parameters.depth / 4000) * timeElapsed);
+		this.mesh.position.z -= 10;
 	}
 
-	this.success = function(){
-		this.mesh.material.color = 0x000000;
-	}
-	
 	this.destroy = function(){
 		this.mesh.position.y = this.mesh.position.y - 20;
 		var _this = this;
@@ -159,7 +161,7 @@ function drawBox(data){
 			scene.add(box.mesh);
 			boxes.push(box);
 		}
-	} 
+	}
 }
 
 /*function playNote(data){

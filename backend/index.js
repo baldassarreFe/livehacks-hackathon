@@ -24,6 +24,7 @@ notes.forEach(function (n) {
         return;
 
     n.time = Math.round(1000 * n.time);
+    n.ok = true;
 
     var shiftedTime = n.time + 4000;
     if (!groupedNotes[shiftedTime])
@@ -32,14 +33,15 @@ notes.forEach(function (n) {
 
     var flooredTime = Math.floor(n.time / 500) * 500;
     if (!boxesToShow[flooredTime])
-        boxesToShow[flooredTime] = [];
+        boxesToShow[flooredTime] = {};
     var color = chooseBoxColor(n);
     n.boxId = flooredTime;
-    boxesToShow[flooredTime][color] = {duration: 0.5, id: flooredTime}; //Math.max(n.duration, boxesToShow[flooredTime][color]);
+    boxesToShow[flooredTime][color] = {duration: 0.5, id: flooredTime};
+    //Math.max(n.duration, boxesToShow[flooredTime][color]);
 });
 
 // screen socket
-const backendUrl = '130.237.14.63';
+const backendUrl = '130.237.14.66';
 const http = require('http');
 const screenServer = http.createServer();
 screenServer.listen(3000, backendUrl);
@@ -108,7 +110,7 @@ function startSong() {
 function sendToScreen() {
     var delta = Date.now() - startTime;
     if (boxesToShow.hasOwnProperty(delta)) {
-        console.log(boxesToShow);
+        console.log(boxesToShow[delta]);
         screenSocket.emit('boxOnScreen', boxesToShow[delta])
     }
 
