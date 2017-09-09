@@ -3,16 +3,18 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 var users = [];
+receivedJumps = 0;
 
 app.get('/', function (req, res) {
     res.send('<h1>Hello world</h1>');
 });
 
 io.on('connection', function (socket) {
-    users.push(socket)
+    users.push(socket);
     console.log('Users connected, now ' + users.length);
 
-    receivedJumps = 0;
+    socket.emit('song info', {title: 'some song'});
+
     if (users.length >= 2)
         socket.emit('song start');
 
@@ -36,5 +38,5 @@ function endSong() {
 }
 
 http.listen(3000, function () {
-    console.log('listening on *:3000');
+    console.log('listening on port 3000');
 });

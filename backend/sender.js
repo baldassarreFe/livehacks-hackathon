@@ -12,6 +12,8 @@ socket.on('song start', function(msg) {
     userJumping()
 });
 
+socket.on('song info', console.log);
+
 socket.on('song end', function (msg) {
     socket.disconnect();
     process.exit(0);
