@@ -39,7 +39,7 @@ notes.forEach(function (n) {
 });
 
 // screen socket
-const backendUrl = '130.237.14.66';
+const backendUrl = '130.237.14.63';
 const http = require('http');
 const screenServer = http.createServer();
 screenServer.listen(3000, backendUrl);
@@ -108,12 +108,11 @@ function startSong() {
 function sendToScreen() {
     var delta = Date.now() - startTime;
     if (boxesToShow.hasOwnProperty(delta)) {
-        console.log(delta);
+        console.log(boxesToShow);
         screenSocket.emit('boxOnScreen', boxesToShow[delta])
     }
 
     if (groupedNotes.hasOwnProperty(delta + 4000)) {
-        console.log(delta);
         screenSocket.emit('noteOnScreen', groupedNotes[delta + 4000])
     }
 }
