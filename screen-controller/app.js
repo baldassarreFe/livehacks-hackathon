@@ -3,7 +3,7 @@ const synth = new Tone.Synth().toMaster();
 
 var clock = new THREE.Clock();
 var scene, stats;
-var cliff;
+var cliff, sun;
 var boxes = [];
 var notes = [];
 
@@ -44,10 +44,10 @@ socket.on('noteOnScreen',function(data){
 window.onload = function(){
 
 	scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2(0x0000ff,0.0005);
+	scene.fog = new THREE.FogExp2(0x6622ff,0.0004);
 
 	camera = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,10000);
-	camera.position.set(0,400,-900);
+	camera.position.set(0,600,-1300);
 	camera.lookAt(scene.position);
 
 	stats = new Stats();
@@ -65,21 +65,34 @@ window.onload = function(){
 function environment(){
 	// cliff
 	let cliffGeometry = new THREE.CubeGeometry(1000,1000,2000);
-	let cliffMaterial = new THREE.MeshBasicMaterial({
-		color:0x000000
+	let cliffMaterial = new THREE.MeshPhongMaterial({
+		color:0x000000,
+		specular:0xff0000
 	});
 	cliff = new THREE.Mesh(cliffGeometry,cliffMaterial);
 	cliff.position.y = -510;
 	cliff.position.z = 1000;
 	scene.add(cliff);
+	// edge
+	let edgeGeometry = new THREE.CubeGeometry(1000,10,200);
+	let edgeMaterial = new THREE.MeshBasicMaterial({
+		color:0x00ff00,
+		transparent:true,
+		opacity:0.9
+	})
+	edge = new THREE.Mesh(edgeGeometry,edgeMaterial);
+	edge.position.y = 0;
+	edge.position.z = 100;
+	scene.add(edge);
 	// world
-	let worldGeometry = new THREE.SphereGeometry(1000,50,50);
+	let worldGeometry = new THREE.SphereGeometry(3000,50,50);
     let worldMaterial = new THREE.MeshPhongMaterial({
     	side:THREE.DoubleSide,
     	color:0x0000ff
     });
     world = new THREE.Mesh(worldGeometry,worldMaterial);
     scene.add(world);
+
 }
 
 function render(){
