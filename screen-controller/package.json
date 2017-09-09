@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "my first socket.io app",
   "dependencies": {
-    "easymidi": "0.0.2",
     "express": "^4.15.4",
     "socket.io": "^1.7.4",
     "tone": "^0.10.0"
