@@ -1,6 +1,8 @@
 var io = require('socket.io-client');
 
-var socket = io('http://localhost:3000');
+url = '130.237.14.66';
+port = 3001;
+var socket = io('http://'+url+':'+port);
 
 songStart = 0;
 uuid = uuidv4();
