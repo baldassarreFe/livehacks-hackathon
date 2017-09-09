@@ -3,20 +3,45 @@ const song = require('./midi/song.js');
 const track = song.tracks[1];
 var notes = track.notes;
 
+var startTime = null;
+boxesToShow = {};
 groupedNotes = {};
+
+function chooseBoxColor(note) {
+    switch (note.name[0]) {
+        case 'C':
+        case 'E': return 'red';
+        case 'G':
+        case 'B': return 'blue';
+        case 'D':
+        case 'F': return 'yellow';
+        case 'A': return 'green';
+    }
+}
+
 notes.forEach(function (n) {
+    if (n.name === undefined)
+        return
+
     n.time = Math.round(1000 * n.time);
-    if (!groupedNotes[n.time])
-        groupedNotes[n.time] = [];
-    groupedNotes[n.time].push(n)
+
+    var shiftedTime = n.time + 4000;
+    if (!groupedNotes[shiftedTime])
+        groupedNotes[shiftedTime] = [];
+    groupedNotes[shiftedTime].push(n);
+
+    var flooredTime = Math.floor(n.time / 500) * 500;
+    if (!boxesToShow[flooredTime])
+        boxesToShow[flooredTime] = {red: 0, blue: 0, green: 0, yellow: 0};
+    var color = chooseBoxColor(n);
+    boxesToShow[flooredTime][color] = 0.5; //Math.max(n.duration, boxesToShow[flooredTime][color]);
 });
 
-var startTime = null;
-
 // screen socket
+const backendUrl = '130.237.14.66';
 const http = require('http');
 const screenServer = http.createServer();
-screenServer.listen(3000, '130.237.14.66');
+screenServer.listen(3000, backendUrl);
 const screenIo = require('socket.io').listen(screenServer);
 
 screenSocket = null;
@@ -24,26 +49,13 @@ screenIo.on('connection', function (socket) {
     console.log('Screen connected');
     screenSocket = socket;
 
-    screenSocket.emit('noteOnScreen',
-        [{name: 'C4', duration: 5},
-            {name: 'G4', duration: 1},
-            {name: 'E4', duration: 2}]);
-
     if (shouldStartSong())
         startSong();
 });
 
-function sendNotes() {
-    delta = Date.now() - startTime;
-    if (groupedNotes.hasOwnProperty(delta)) {
-        console.log(delta); //, notesNow.map(function(x) {return [x.name, x.duration]}));
-        screenSocket.emit('noteOnScreen', groupedNotes[delta])
-    }
-}
-
 // app sockets
 const server = http.createServer();
-server.listen(3001, '130.237.14.66');
+server.listen(3001, backendUrl);
 const appIo = require('socket.io').listen(server);
 
 var users = [];
@@ -62,9 +74,6 @@ appIo.on('connection', function (socket) {
         console.log(msg);
         receivedJumps++;
 
-        screenSocket.emit('noteOnScreen', {key: 'C#4', velocity: '8n'});
-        screenSocket.emit('noteOnScreen', {key: 'C4', velocity: '8n'});
-
         if (receivedJumps > 10)
             endSong()
     });
@@ -79,18 +88,35 @@ function shouldStartSong() {
     return screenSocket !== null && users.length >= 0
 }
 
+// song events
+
 function startSong() {
     for (var i = 0; i < users.length; i++)
         users[i].emit('song start');
     screenSocket.emit('song start');
 
     startTime = Date.now();
-    setInterval(sendNotes, 1)
+    setInterval(sendToScreen, 1);
+}
+
+function sendToScreen() {
+    var delta = Date.now() - startTime;
+    if (boxesToShow.hasOwnProperty(delta)) {
+        console.log(delta);
+        screenSocket.emit('noteOnScreen', boxesToShow[delta])
+    }
+
+    if (groupedNotes.hasOwnProperty(delta + 4000)) {
+        console.log(delta);
+        screenSocket.emit('boxOnScreen', groupedNotes[delta + 4000])
+    }
 }
 
 function endSong() {
     for (var i = 0; i < users.length; i++)
         users[i].emit('song end');
+        users[i].disconnect();
     screenSocket.emit('song end');
+    screenSocket.disconnect();
     process.exit(0);
 }
