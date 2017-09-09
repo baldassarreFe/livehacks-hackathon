@@ -73,6 +73,17 @@ function environment(){
 	cliff.position.y = -510;
 	cliff.position.z = 1000;
 	scene.add(cliff);
+	// edge
+	let edgeGeometry = new THREE.CubeGeometry(1000,10,200);
+	let edgeMaterial = new THREE.MeshBasicMaterial({
+		color:0x00ff00,
+		transparent:true,
+		opacity:0.4
+	})
+	edge = new THREE.Mesh(edgeGeometry,edgeMaterial);
+	edge.position.y = 0;
+	edge.position.z = 100;
+	scene.add(edge);
 	// world
 	let worldGeometry = new THREE.SphereGeometry(1000,50,50);
     let worldMaterial = new THREE.MeshPhongMaterial({
