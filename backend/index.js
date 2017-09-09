@@ -109,12 +109,12 @@ function sendToScreen() {
     var delta = Date.now() - startTime;
     if (boxesToShow.hasOwnProperty(delta)) {
         console.log(delta);
-        screenSocket.emit('noteOnScreen', boxesToShow[delta])
+        screenSocket.emit('boxOnScreen', boxesToShow[delta])
     }
 
     if (groupedNotes.hasOwnProperty(delta + 4000)) {
         console.log(delta);
-        screenSocket.emit('boxOnScreen', groupedNotes[delta + 4000])
+        screenSocket.emit('noteOnScreen', groupedNotes[delta + 4000])
     }
 }
 
