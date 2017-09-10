@@ -74,7 +74,7 @@ function environment(){
 	cliff.position.z = 1000;
 	scene.add(cliff);
 	// edge
-	let edgeGeometry = new THREE.CubeGeometry(1000,10,200);
+	let edgeGeometry = new THREE.CubeGeometry(1000,2,200);
 	let edgeMaterial = new THREE.MeshBasicMaterial({
 		color:0x00ff00,
 		transparent:true,
